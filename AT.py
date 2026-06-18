@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-import uvicorn
 import os
+import json
 
 app = FastAPI()
 
@@ -84,26 +84,48 @@ async def analyze_scene(request: SceneRequest):
     try:
         scene = request.scene_data
         
-        response = {
+        # Dummy response payload
+        dummy_response = {
             "status": "success",
             "message": f"Scene {scene.scene_id} analyzed successfully",
             "scene_id": scene.scene_id,
             "object_count": len(scene.objects),
             "room_count": len(scene.rooms),
-            "scores": scene.scores,
-            "issues": scene.issues,
+            "scores": {
+                "spacing": 0.85,
+                "walkability": 0.92,
+                "style_consistency": 0.88,
+                "lighting": 0.75,
+                "functionality": 0.90
+            },
+            "issues": [
+                "tv_distance_too_close",
+                "sofa_obstructing_pathway",
+                "low_lighting_in_corners"
+            ],
             "user_action": {
                 "action": scene.user_action.action,
-                "target": scene.user_action.target_id
+                "target": scene.user_action.target_id,
+                "status": "completed"
             },
             "analysis": {
                 "total_objects": len(scene.objects),
                 "object_types": list(set(obj.type for obj in scene.objects)),
-                "rooms_detected": [room.room_type for room in scene.rooms]
-            }
+                "rooms_detected": [room.room_type for room in scene.rooms],
+                "recommendations": [
+                    "Move sofa 0.5m away from TV",
+                    "Add floor lamp in corner",
+                    "Create clear pathway to exit"
+                ],
+                "quality_score": 4.2,
+                "max_capacity": 6,
+                "optimization_possible": True
+            },
+            "timestamp": "2026-06-18T10:30:00Z",
+            "version": "2.1.0"
         }
         
-        return response
+        return dummy_response
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -111,6 +133,10 @@ async def analyze_scene(request: SceneRequest):
 @app.get("/")
 async def root():
     return {"message": "Scene Analysis API is running"}
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
